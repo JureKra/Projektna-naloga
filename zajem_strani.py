@@ -19,14 +19,14 @@ def shrani_url_v_html_datoteko(url, datoteka):
     try:
         vsebina = requests.get(url)
         if vsebina.status_code == 200:
-            #return vsebina.text
+            vsebina_utf8 = vsebina.content.decode("utf-8")
             with open(datoteka, "w", encoding="utf-8") as dat:
-                dat.write(vsebina.text)
+                dat.write(vsebina_utf8)
                 print("Datoteka je shranjena.")
     except:
         print(f"Napaka pri nalaganju URL-ja {url}")
         return None
-    return vsebina.text
+    return vsebina_utf8
 
 
 #prebere niz z vsebino datoteke
