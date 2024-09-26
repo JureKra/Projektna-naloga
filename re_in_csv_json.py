@@ -27,7 +27,7 @@ def preberi_besedilo_iz_html(mapa, datoteka):
         return dat.read()
     
 
-def rednidel_sezone(html):
+def regular_season(html):
     vzorec_rednidelsezone = r'<div class="table_container tabbed current hide_long long" id="div_per_game_stats">(.*?)<\/div>'   #<div class="table_container tabbed current hide_long long" id="div_per_game_stats">
     najdi_rednidel = re.search(vzorec_rednidelsezone, html, flags=re.DOTALL)
     if najdi_rednidel:
@@ -68,8 +68,9 @@ def izlusci_igralce(html):
     vzorec_igralci = r'<tbody>(.*?)<\/tbody>'       # v kakšni obliki najdemo VSE igralce v html kodi
     vzorec_igralec = r'<tr .*?>(.*?)<\/tr>'         # v kakšni obliki najdemo ENEGA igralca v html kodi
     vzorec_vrednosti = r'<td .*?>(.*?)<\/td>'       # v kakšni obliki najdemo statistiko za vsakega igralca v html kodi
+    vzorec_imena = r'<a href="/players/.*?>(.*?)<\/a>'
     najdi_igralce = re.search(vzorec_igralci, html, flags=re.DOTALL)      #imamo kodo, kjer so zajeti vsi igralci
-    podatki_o_igralcu = [] 
+    podatki_o_igralcih = [] 
     if najdi_igralce:
         najdi_igralca = re.findall(vzorec_igralec, najdi_igralce.group(1), flags=re.DOTALL)    #dobili smo kodo za enega igralca
         for vrstica in najdi_igralca:
@@ -77,13 +78,24 @@ def izlusci_igralce(html):
             if vrednosti:
                 preciscene_vrednosti = []
                 for v in vrednosti:
-                    preciscene_vrednosti.append(v.strip())
+                    najdi_ime = re.search(vzorec_imena, v, flags=re.DOTALL)
+                    if najdi_ime:
+                        ime_igralca = najdi_ime.group(1).strip()
+                        preciscene_vrednosti.append(ime_igralca)
+                    else:
+                        brez_ostalih_oznak = re.sub(r'<.*?>', '', v).strip()
+                        preciscene_vrednosti.append(brez_ostalih_oznak)
                 
                 if len(preciscene_vrednosti) == st_kategorij - 1:  # Če je ena vrednost premalo
                     preciscene_vrednosti.insert(0, '')  # Dodamo prazno vrednost na prvo mesto
 
-                podatki_o_igralcu.append(preciscene_vrednosti)
-    return podatki_o_igralcu
+                podatki_o_igralcih.append(preciscene_vrednosti)
+
+    for podatki_o_enem_igralcu in podatki_o_igralcih:           #iz podatkov o igralcih zbrišemo 
+        if len(podatki_o_enem_igralcu) > 16:                    #vrednosti za eFG% na 17.mestu
+            del podatki_o_enem_igralcu[16]
+
+    return podatki_o_igralcih
                     
 
 
@@ -101,25 +113,52 @@ def ustvari_seznam_slovarjev(html):
     return seznam_slovarjev
 
 
+# funkcija za zapis podatkov v csv
+def naredi_csv(datoteka_csv, seznam_slovarjev, kategorije):
+    with open(datoteka_csv, "w", encoding="utf-8") as dat:
+        writer = csv.DictWriter(dat, fieldnames=kategorije)
+        writer.writeheader()
+        for igralec in seznam_slovarjev:
+            writer.writerow(igralec)
 
 
+# funkcija za zapis podatkov v json
+def naredi_json(datoteka_json, seznam_slovarjev):
+    with open(datoteka_json, "w", encoding="utf-8") as dat:
+        json.dump(seznam_slovarjev, dat, ensure_ascii=False, indent=4)
 
 
-def obdelaj_regular_season(html):
-    regular_season_html = rednidel_sezone(html)
+# funkcija, ki obdela regular season 
+def obdelaj_regular_season(html, csv_datoteka, json_datoteka):
+    regular_season_html = regular_season(html)
     if regular_season_html:
+        seznam_slovarjev = ustvari_seznam_slovarjev(regular_season_html)
         kategorije = izlusci_kategorije(regular_season_html)
-        podatki = izlusci_igralce(regular_season_html)
-        return kategorije, podatki
-    return [], []
+    naredi_csv(csv_datoteka, seznam_slovarjev, kategorije)
+    naredi_json(json_datoteka, seznam_slovarjev)
 
-def obdelaj_playoffs(html):
+
+
+# funkcija, ki obdela playoffs
+def obdelaj_playoffs(html, csv_datoteka, json_datoteka):
     playoffs_html = playoffs(html)
     if playoffs_html:
+        seznam_slovarjev = ustvari_seznam_slovarjev(playoffs_html)
         kategorije = izlusci_kategorije(playoffs_html)
-        podatki = izlusci_igralce(playoffs_html)
-        return kategorije, podatki
-    return [], []
+    naredi_csv(csv_datoteka, seznam_slovarjev, kategorije)
+    naredi_json(json_datoteka, seznam_slovarjev)
+
+
+def obdelaj_shrani_vse(html_datoteka, csv_regular, json_regular, csv_playoffs, json_playoffs):
+    html = preberi_besedilo_iz_html(html_datoteka)
+    obdelaj_regular_season(html, csv_regular, json_regular)
+    obdelaj_playoffs(html, csv_playoffs, json_playoffs)
+
+
+
+#print(izlusci_kategorije(shrani_url_v_html_datoteko(brstats_url, brstats_html)))
+#print(izlusci_igralce(shrani_url_v_html_datoteko(brstats_url, brstats_html), st_kategorij))
+
 
 
 #def rednidel_csv(regularseason_csv, seznam_slovarjev, kategorije):
@@ -129,11 +168,6 @@ def obdelaj_playoffs(html):
     #    writer.writerows(igralci)
 
 
-
-
-# funkcija, ki obdela regular season 
-
-# funkcija, ki obdela playoffs
 
 # nardis csv in json datoteki za regular season
 # nardis csv in json datoteki za playoffse
