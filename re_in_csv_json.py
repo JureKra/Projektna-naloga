@@ -1,7 +1,54 @@
+import requests
 import re
 import csv
 import json
 import os
+from bs4 import BeautifulSoup
+
+#url spletne strani
+brstats_url = "https://www.basketball-reference.com/leagues/NBA_2024_per_game.html"
+#datoteka, kjer bomo shranili html spletne strani
+brstats_html = "stran.html"
+#datoteka, kjer bomo shranili podatke iz spletne strani v csv
+brstats_csv = "podatki.csv"
+#mapa s podatki
+direktorij = "podatki"
+
+
+#funkcija, ki prejme url spletne strani in naredi datoteko z HTML kodo spletne strani
+def shrani_url_v_html_datoteko(url, datoteka):
+    try:
+        vsebina = requests.get(url)
+        if vsebina.status_code == 200:
+            vsebina_utf8 = vsebina.content.decode("utf-8")
+            with open(datoteka, "w", encoding="utf-8") as dat:
+                dat.write(vsebina_utf8)
+                print("Datoteka je shranjena.")
+    except:
+        print(f"Napaka pri nalaganju URL-ja {url}")
+        return None
+    return vsebina_utf8
+
+
+#prebere niz z vsebino datoteke
+def preberi_besedilo_iz_html(datoteka):
+    #path = os.path.join(mapa, datoteka)
+    with open(datoteka  , "r", encoding="utf-8") as dat:
+        return dat.read()
+    
+
+#funkcija, ki prejme datoteko z neurejeno html kodo in jo uredi
+def uredi_html(datoteka):
+    with open(datoteka, "r", encoding="utf-8") as dat:
+        soup = BeautifulSoup(dat, "html.parser")
+        urejen_html = soup.prettify()
+        with open(datoteka, "w", encoding="utf-8") as dat:
+            dat.write(urejen_html)
+            print("Urejena HTML koda je bila prepisana.")
+
+
+shrani_url_v_html_datoteko(brstats_url, brstats_html)
+uredi_html(brstats_html)
 
 #vzorec bloka 
 #vzorec_bloka = re.compile(
@@ -21,11 +68,6 @@ json_playoffs = "koncnica.json"
 
 
 
-def preberi_besedilo_iz_html(mapa, datoteka):
-    path = os.path.join(mapa, datoteka)
-    with open(path, "r", encoding="utf-8") as dat:
-        return dat.read()
-    
 
 def regular_season(html):
     vzorec_rednidelsezone = r'<div class="table_container tabbed current hide_long long" id="div_per_game_stats">(.*?)<\/div>'   #<div class="table_container tabbed current hide_long long" id="div_per_game_stats">
@@ -50,7 +92,7 @@ def izlusci_kategorije(html):
     
     najdi_kategorije = re.search(vzorec_kategorij, html, flags=re.DOTALL)
     if najdi_kategorije:
-        vse_kategorije = re.findall(vse_kategorije, najdi_kategorije.group(1), flags=re.DOTALL)
+        vse_kategorije = re.findall(vzorec_kategorije, najdi_kategorije.group(1), flags=re.DOTALL)
         preciscene_kategorije = []
         for kategorija in vse_kategorije:       #pobrišemo morebitne presledke
             preciscene_kategorije.append(kategorija.strip())
@@ -62,7 +104,7 @@ def izlusci_kategorije(html):
         return izbrane_kategorije
     return []
 
-st_kategorij = len(izlusci_kategorije(html_datoteka))
+#st_kategorij = len(izlusci_kategorije(brstats_html))
 
 def izlusci_igralce(html):
     vzorec_igralci = r'<tbody>(.*?)<\/tbody>'       # v kakšni obliki najdemo VSE igralce v html kodi
@@ -86,8 +128,8 @@ def izlusci_igralce(html):
                         brez_ostalih_oznak = re.sub(r'<.*?>', '', v).strip()
                         preciscene_vrednosti.append(brez_ostalih_oznak)
                 
-                if len(preciscene_vrednosti) == st_kategorij - 1:  # Če je ena vrednost premalo
-                    preciscene_vrednosti.insert(0, '')  # Dodamo prazno vrednost na prvo mesto
+                #if len(preciscene_vrednosti) == st_kategorij - 1:  # Če je ena vrednost premalo
+                 #   preciscene_vrednosti.insert(0, '')  # Dodamo prazno vrednost na prvo mesto
 
                 podatki_o_igralcih.append(preciscene_vrednosti)
 
@@ -156,10 +198,12 @@ def obdelaj_shrani_vse(html_datoteka, csv_regular, json_regular, csv_playoffs, j
 
 
 
-#print(izlusci_kategorije(shrani_url_v_html_datoteko(brstats_url, brstats_html)))
-#print(izlusci_igralce(shrani_url_v_html_datoteko(brstats_url, brstats_html), st_kategorij))
+#html = preberi_besedilo_iz_html(direktorij, brstats_html)
 
+print(izlusci_kategorije(shrani_url_v_html_datoteko(brstats_url, brstats_html)))
+print(izlusci_igralce(shrani_url_v_html_datoteko(brstats_url, brstats_html)))
 
+obdelaj_shrani_vse(html_datoteka, csv_regular, json_regular, csv_playoffs, json_playoffs)
 
 #def rednidel_csv(regularseason_csv, seznam_slovarjev, kategorije):
  #   with open(regularseason_csv, "w", encoding="utf-8") as csv_datoteka:

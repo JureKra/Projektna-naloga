@@ -30,9 +30,9 @@ def shrani_url_v_html_datoteko(url, datoteka):
 
 
 #prebere niz z vsebino datoteke
-def preberi_besedilo_iz_html(mapa, datoteka):
-    path = os.path.join(mapa, datoteka)
-    with open(path, "r", encoding="utf-8") as dat:
+def preberi_besedilo_iz_html(datoteka):
+    #path = os.path.join(mapa, datoteka)
+    with open(datoteka, "r", encoding="utf-8") as dat:
         return dat.read()
     
 
@@ -48,4 +48,7 @@ def uredi_html(datoteka):
 
 shrani_url_v_html_datoteko(brstats_url, brstats_html)
 uredi_html(brstats_html)
+
+
+
 
