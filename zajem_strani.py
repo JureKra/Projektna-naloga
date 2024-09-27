@@ -1,7 +1,4 @@
 import requests
-import os
-import csv
-import json
 from bs4 import BeautifulSoup
 
 #url spletne strani
@@ -48,7 +45,5 @@ def uredi_html(datoteka):
 
 shrani_url_v_html_datoteko(brstats_url, brstats_html)
 uredi_html(brstats_html)
-
-
 
 
