@@ -2,17 +2,17 @@ import requests
 import re
 import csv
 import json
-import os
 from bs4 import BeautifulSoup
 
 #url spletne strani
 brstats_url = "https://www.basketball-reference.com/leagues/NBA_2024_per_game.html"
 #datoteka, kjer bomo shranili html spletne strani
-brstats_html = "stran.html"
-#datoteka, kjer bomo shranili podatke iz spletne strani v csv
-brstats_csv = "podatki.csv"
-#mapa s podatki
-direktorij = "podatki"
+html_datoteka = "stran.html"
+# datoteke, kjer bomo shranili csv in json za redni del in končnico
+csv_regular = "redni_del_sezone.csv"
+json_regular = "redni_del_sezone.json"
+csv_playoffs = "koncnica.csv"
+json_playoffs = "koncnica.json"
 
 
 #funkcija, ki prejme url spletne strani in naredi datoteko z HTML kodo spletne strani
@@ -30,6 +30,16 @@ def shrani_url_v_html_datoteko(url, datoteka):
     return vsebina_utf8
 
 
+#funkcija, ki prejme datoteko z neurejeno html kodo in jo uredi
+def uredi_html(vhodna_datoteka, izhodna_datoteka):
+    with open(vhodna_datoteka, "r", encoding="utf-8") as dat:
+        soup = BeautifulSoup(dat, "html.parser")
+        urejen_html = soup.prettify()
+        with open(izhodna_datoteka, "w", encoding="utf-8") as dat:
+            dat.write(urejen_html)
+            print("Urejena HTML koda je bila prepisana.")
+
+
 #prebere niz z vsebino datoteke
 def preberi_besedilo_iz_html(datoteka):
     #path = os.path.join(mapa, datoteka)
@@ -37,31 +47,13 @@ def preberi_besedilo_iz_html(datoteka):
         return dat.read()
     
 
-#funkcija, ki prejme datoteko z neurejeno html kodo in jo uredi
-def uredi_html(datoteka):
-    with open(datoteka, "r", encoding="utf-8") as dat:
-        soup = BeautifulSoup(dat, "html.parser")
-        urejen_html = soup.prettify()
-        with open(datoteka, "w", encoding="utf-8") as dat:
-            dat.write(urejen_html)
-            print("Urejena HTML koda je bila prepisana.")
+shrani_url_v_html_datoteko(brstats_url, html_datoteka)
+uredi_html(html_datoteka, "urejena_stran.html")
 
 
-shrani_url_v_html_datoteko(brstats_url, brstats_html)
-uredi_html(brstats_html)
-
-
-
-html_datoteka = "stran.html"
-csv_regular = "redni_del_sezone.csv"
-json_regular = "redni_del_sezone.json"
-csv_playoffs = "koncnica.csv"
-json_playoffs = "koncnica.json"
-
-
-
+# funkcija, ki poišče redni del sezone
 def regular_season(html):
-    vzorec_rednidelsezone = r'<div class="table_container tabbed current hide_long long" id="div_per_game_stats">(.*?)<\/div>'   #<div class="table_container tabbed current hide_long long" id="div_per_game_stats">
+    vzorec_rednidelsezone = r'<div class="table_container tabbed current hide_long long" id="div_per_game_stats">(.*?)<\/div>'
     najdi_rednidel = re.search(vzorec_rednidelsezone, html, flags=re.DOTALL)
     if najdi_rednidel:
         return najdi_rednidel.group(1)
@@ -69,14 +61,16 @@ def regular_season(html):
         return ""
     
 
+# funkcija, ki poišče končnico
 def playoffs(html):
-    vzorec_playoffs = r'<div class="table_container tabbed hide_long long" id="div_per_game_stats_post">(.*?)<\/div>'   #<div class="table_container tabbed hide_long long" id="div_per_game_stats_post">
+    vzorec_playoffs = r'<div class="table_container tabbed hide_long long" id="div_per_game_stats_post">(.*?)<\/div>'
     najdi_playoffs = re.search(vzorec_playoffs, html, flags=re.DOTALL)
     if najdi_playoffs:
         return najdi_playoffs.group(1)
     else:
         return ""
-    
+
+
 # funkcija, ki izlušči vse kategorije v glavi tabele 
 def izlusci_kategorije(html):
     vzorec_kategorij = r'<thead>(.*?)<\/thead>'
@@ -98,7 +92,6 @@ def izlusci_kategorije(html):
            preciscene_kategorije = preciscene_kategorije[1:]  # odstranimo rank
         return preciscene_kategorije
     return []
-
 
 
 # funkcija, ki izlušči podatke vseh kategorij za vse igralce
@@ -156,7 +149,7 @@ def naredi_json(datoteka_json, seznam_slovarjev):
         json.dump(seznam_slovarjev, dat, ensure_ascii=False, indent=4)
 
 
-# funkcija, ki obdela regular season 
+# funkcija, ki obdela redni del sezone 
 def obdelaj_regular_season(html, csv_datoteka, json_datoteka):
     regular_season_html = regular_season(html)
     if regular_season_html:
@@ -183,11 +176,4 @@ def obdelaj_shrani_vse(html_datoteka, csv_regular, json_regular, csv_playoffs, j
     obdelaj_playoffs(html, csv_playoffs, json_playoffs)
 
 
-
-
-print(izlusci_kategorije(shrani_url_v_html_datoteko(brstats_url, brstats_html)))
-print(izlusci_igralce(shrani_url_v_html_datoteko(brstats_url, brstats_html)))
-
 obdelaj_shrani_vse(html_datoteka, csv_regular, json_regular, csv_playoffs, json_playoffs)
-
-
