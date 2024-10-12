@@ -42,7 +42,6 @@ def uredi_html(vhodna_datoteka, izhodna_datoteka):
 
 #prebere niz z vsebino datoteke
 def preberi_besedilo_iz_html(datoteka):
-    #path = os.path.join(mapa, datoteka)
     with open(datoteka  , "r", encoding="utf-8") as dat:
         return dat.read()
     
