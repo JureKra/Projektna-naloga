@@ -10,6 +10,6 @@ S pomočjo knjižnice Pandas sem analiziral podatke igralcev in iskal različne 
 
 V datoteki main.py je shranjena koda, ki prejme url naslov spletne strani in shrani html kodo v novo datoteko, še prej pa jo uredi. Nadaljnje funckije iz dobljene html kode s pomočjo regularnih izrazov izluščijo kategorije in podatke za vse igralce. Nato se ustvarijo csv in json datoteke tako za redni del sezone ter za končnico. CSV datoteki sta tisti datoteki, ki ju potem v Juptyer Notebook-u s pomočjo knjižnice Pandas najprej uvozimo, kasneje pa z uporabo različnih metod analiziramo košarkarske podatke. 
 
-Uporabljene knjižnice: za pridobivanje in luščenje podatkov iz spleta potrebujemo knjižnice requests, BeautifulSoup, re, csv in json. V Jupyter Notebook-u pa poleg knjižnice Pandas importamo tudi matplotlib.pyplot za risanje grafov ter število \( \pi \). $ {pi} $
+Uporabljene knjižnice: za pridobivanje in luščenje podatkov iz spleta potrebujemo knjižnice requests, BeautifulSoup, re, csv in json. V Jupyter Notebook-u pa poleg knjižnice Pandas importamo tudi matplotlib.pyplot za risanje grafov ter število $$ \pi $$.
 
 Avtor: Jure Kraševec
